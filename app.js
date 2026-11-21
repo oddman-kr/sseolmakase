@@ -180,7 +180,12 @@
     api("post_photo", { access_token: state.token.access_token, body: body }).then(function (r) {
       var err = r.data && r.data.error;
       if (!r.ok || (err && err.code && err.code !== "ok")) {
-        setStatus("게시 요청이 거절되었습니다: " + ((err && (err.message || err.code)) || r.data.error || "알 수 없는 오류"));
+        var code = err && err.code;
+        var why = code === "unaudited_client_can_only_post_to_private_accounts" ? "심사 전 앱은 비공개 계정에만 게시할 수 있습니다. TikTok 앱에서 계정을 비공개로 바꾼 뒤 다시 시도해 주세요."
+          : code === "url_ownership_unverified" ? "이미지 주소의 소유권이 확인되지 않았습니다."
+          : code === "spam_risk_too_many_posts" ? "오늘 게시할 수 있는 횟수를 모두 사용했습니다."
+          : ((err && (err.message || code)) || r.data.error || "알 수 없는 오류");
+        setStatus("게시 요청이 거절되었습니다: " + why);
         state.posting = false; refresh(); return;
       }
       pollStatus(r.data.data.publish_id, 0);
