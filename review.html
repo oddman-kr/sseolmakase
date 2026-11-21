@@ -67,7 +67,7 @@ button{font:inherit;cursor:pointer}
 <div class="wrap">
 <div class="top">
 <button class="epnav" id="prevEp" type="button" aria-label="이전 화">‹</button>
-<button class="toc-btn" id="openToc" type="button" aria-haspopup="dialog" aria-label="목차 열기"><span class="ep" id="curEp">#—</span><span class="ti" id="curTitle">불러오는 중</span><span class="badge" id="curBadge"></span><span class="ar">▾</span></button>
+<button class="toc-btn" id="openToc" type="button" aria-haspopup="dialog" aria-label="목차 열기"><span class="ep" id="curEp">—</span><span class="ti" id="curTitle">불러오는 중</span><span class="badge" id="curBadge"></span><span class="ar">▾</span></button>
 <button class="epnav" id="nextEp" type="button" aria-label="다음 화">›</button>
 </div>
 
@@ -118,6 +118,8 @@ button{font:inherit;cursor:pointer}
   var posts=[], status={}, cur=-1, page=0;
   function $(id){return document.getElementById(id);}
   function st(p){return (status[p.id]||{}).status||"draft";}
+  function no(p){var n=0;for(var k=0;k<posts.length;k++){if(st(posts[k])!=="deleted")n++; if(posts[k]===p)return st(p)==="deleted"?null:n;}return null;}
+  function lab(p){var n=no(p);return n?n+"화":"삭제";}
   function visible(){var showDel=$("showDel").checked; return posts.filter(function(p){return showDel||st(p)!=="deleted";});}
   function src(k){var p=posts[cur]; return "posts/"+p.id+"/"+p.images[k]+(p.v?"?v="+p.v:"");}
   function showPage(){
@@ -131,7 +133,7 @@ button{font:inherit;cursor:pointer}
   function renderHeader(){
     var p=posts[cur]; if(!p)return;
     var s=st(p);
-    $("curEp").textContent="#"+p.id; $("curTitle").textContent=p.title;
+    $("curEp").textContent=lab(p); $("curTitle").textContent=p.title;
     $("curBadge").textContent=LABEL[s]||s; $("curBadge").className="badge "+s;
     $("igSt").textContent=LABEL[s]||s; $("igSt").className="badge "+s;
     $("delete").textContent = s==="deleted" ? "복구" : "삭제";
@@ -150,14 +152,14 @@ button{font:inherit;cursor:pointer}
   function go(d){var p=posts[cur]; var n=page+d; if(p&&n>=0&&n<p.images.length){page=n; showPage();}}
   function renderList(){
     var q=$("q").value.trim().toLowerCase(), vis=visible();
-    var rows=vis.filter(function(p){return !q || p.id.indexOf(q)>=0 || String(parseInt(p.id,10))===q || (p.title||"").toLowerCase().indexOf(q)>=0;});
+    var rows=vis.filter(function(p){return !q || String(no(p))===q.replace(/화$/,"") || (p.title||"").toLowerCase().indexOf(q)>=0;});
     $("cnt").textContent="("+vis.length+"편)";
     if(!rows.length){$("list").innerHTML="<div class='empty'>찾는 썰이 없어요</div>";return;}
     $("list").innerHTML="";
     rows.slice().reverse().forEach(function(p){
       var s=st(p), b=document.createElement("button");
       b.type="button"; b.className="item"+(posts[cur]===p?" cur":"");
-      b.innerHTML="<span class='n'>#"+p.id+"</span><span class='t'></span><span class='badge "+s+"'>"+(LABEL[s]||s)+"</span>";
+      b.innerHTML="<span class='n'>"+lab(p)+"</span><span class='t'></span><span class='badge "+s+"'>"+(LABEL[s]||s)+"</span>";
       b.querySelector(".t").textContent=p.title;
       b.onclick=function(){select(posts.indexOf(p)); closeToc();};
       $("list").appendChild(b);
