@@ -116,6 +116,20 @@ Deno.serve(async (req) => {
       const { error } = await db.from("posts").update({ status: "draft", approved_at: null }).eq("id", String(p.id)).in("status", ["approved", "failed"]);
       return error ? json({ error: error.message }, 500) : json({ ok: true, id: p.id, status: "draft" });
     }
+    case "delete": {
+      const id = String(p.id);
+      const { data: cur } = await db.from("posts").select("status").eq("id", id).maybeSingle();
+      if (cur && (cur.status === "publishing" || cur.status === "published")) return json({ error: "already_" + cur.status }, 409);
+      const sp = cur ? null : await loadSitePost(id);
+      const row = sp ? { ...sp, status: "deleted", approved_at: null } : { id, status: "deleted", approved_at: null };
+      const { error } = cur ? await db.from("posts").update({ status: "deleted", approved_at: null }).eq("id", id)
+                            : await db.from("posts").insert(row);
+      return error ? json({ error: error.message }, 500) : json({ ok: true, id, status: "deleted" });
+    }
+    case "restore": {
+      const { error } = await db.from("posts").update({ status: "draft" }).eq("id", String(p.id)).eq("status", "deleted");
+      return error ? json({ error: error.message }, 500) : json({ ok: true, id: p.id, status: "draft" });
+    }
     case "publish_now":
       if (!TOKEN) return json({ error: "IG_ACCESS_TOKEN not set" }, 500);
       return json(await publishNext());
