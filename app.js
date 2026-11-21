@@ -84,7 +84,7 @@
 
   function showConnect() { $("connect").classList.remove("hidden"); $("app").classList.add("hidden"); }
 
-  function imgUrl(post, name) { return C.mediaBase + post.id + "/" + name; }
+  function imgUrl(post, name) { return C.mediaBase + post.id + "/" + name + (post.v ? "?v=" + post.v : ""); }
 
   function renderViewer() {
     var p = state.post; if (!p) return;

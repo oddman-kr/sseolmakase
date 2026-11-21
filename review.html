@@ -49,7 +49,7 @@ body{margin:0;background:#151312;color:#F3EADB;font-family:-apple-system,BlinkMa
 (function(){
   var posts=[], p=null, i=0;
   function $(id){return document.getElementById(id);}
-  function src(k){return "posts/"+p.id+"/"+p.images[k];}
+  function src(k){return "posts/"+p.id+"/"+p.images[k]+(p.v?"?v="+p.v:"");}
   function show(){
     $("img").src=src(i); $("img").alt=p.title+" "+(i+1)+"장";
     $("num").textContent=(i+1)+" / "+p.images.length;
