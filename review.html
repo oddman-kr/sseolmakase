@@ -26,6 +26,15 @@ body{margin:0;background:#151312;color:#F3EADB;font-family:-apple-system,BlinkMa
 .desc{margin-top:16px;font-size:14px;line-height:1.6;color:#BDB1A0;white-space:pre-line}
 .tap{position:absolute;top:0;bottom:0;width:35%;background:transparent;border:0;cursor:pointer}
 .tap.l{left:0}.tap.r{right:0}
+.ig{margin-top:16px;background:#221E1B;border:1px solid #3A332E;border-radius:12px;padding:14px}
+.ig .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ig .st{font-size:14px;font-weight:700;padding:5px 10px;border-radius:14px;background:#3A332E}
+.ig .st.approved{background:#2E5E3A}.ig .st.published{background:#1F3A5F}.ig .st.failed{background:#7A1A14}.ig .st.publishing{background:#6B4A2E}
+.ig button{font:inherit;font-size:15px;font-weight:700;border-radius:10px;border:0;padding:10px 16px;min-height:44px;cursor:pointer}
+.ig .ok{background:#A8231C;color:#fff}.ig .no{background:#3A332E;color:#F3EADB}
+.ig input{font:inherit;font-size:15px;padding:10px;border-radius:10px;border:1px solid #5A4F45;background:#151312;color:#F3EADB;flex:1;min-width:140px}
+.ig .msg{font-size:13.5px;color:#CFC3B2;margin-top:8px;white-space:pre-line}
+.ig label{font-size:13px;color:#BDB1A0;width:100%}
 </style>
 </head>
 <body>
@@ -43,6 +52,13 @@ body{margin:0;background:#151312;color:#F3EADB;font-family:-apple-system,BlinkMa
 <button id="next" type="button" aria-label="다음 장">→</button>
 </div>
 <div class="dots" id="dots"></div>
+<div class="ig" id="ig">
+<div class="row"><span>인스타 상태</span><span class="st" id="igSt">확인 중</span>
+<button class="ok" id="approve" type="button">승인 (자동 게시 대기열에 넣기)</button>
+<button class="no" id="unapprove" type="button">승인 취소</button></div>
+<div class="row" id="pwRow" style="margin-top:10px"><label for="pw">관리자 비밀번호 (이 기기에 저장)</label><input id="pw" type="password" autocomplete="current-password"></div>
+<div class="msg" id="igMsg">승인한 썰은 매일 12:00, 16:00에 승인한 순서대로 한 편씩 인스타에 올라갑니다.</div>
+</div>
 <div class="desc" id="desc"></div>
 </div>
 <script>
@@ -63,7 +79,7 @@ body{margin:0;background:#151312;color:#F3EADB;font-family:-apple-system,BlinkMa
     $("title").textContent="#"+p.id+" "+p.title;
     $("desc").textContent=p.description||"";
     try{history.replaceState(null,"","#"+p.id);}catch(e){}
-    show();
+    show(); renderIg();
   }
   function go(d){var n=i+d; if(p&&n>=0&&n<p.images.length){i=n; show();}}
   $("prev").onclick=function(){go(-1);}; $("next").onclick=function(){go(1);};
@@ -72,11 +88,27 @@ body{margin:0;background:#151312;color:#F3EADB;font-family:-apple-system,BlinkMa
   var x0=null;
   $("stage").addEventListener("touchstart",function(e){x0=e.touches[0].clientX;},{passive:true});
   $("stage").addEventListener("touchend",function(e){if(x0===null)return; var dx=e.changedTouches[0].clientX-x0; if(Math.abs(dx)>40)go(dx<0?1:-1); x0=null;});
+  var FN="https://rkcgqhmnhiwgfzglkvto.supabase.co/functions/v1/ig", status={};
+  var LABEL={draft:"미승인",approved:"승인됨 · 게시 대기",publishing:"게시 중",published:"게시 완료",failed:"게시 실패"};
+  function call(body){return fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(function(r){return r.json();});}
+  function pw(){var v=$("pw").value; try{if(v)localStorage.setItem("sseol_pw",v); else v=localStorage.getItem("sseol_pw")||"";}catch(e){} return v;}
+  try{$("pw").value=localStorage.getItem("sseol_pw")||"";}catch(e){}
+  function renderIg(){ if(!p)return; var s=status[p.id]||{status:"draft"}; $("igSt").textContent=LABEL[s.status]||s.status; $("igSt").className="st "+s.status;
+    if(s.status==="failed"&&s.error)$("igMsg").textContent="실패 이유: "+s.error; }
+  function refreshIg(){call({action:"list"}).then(function(d){status={};(d.posts||[]).forEach(function(x){status[x.id]=x;});renderIg();}).catch(function(){$("igSt").textContent="서버 연결 실패";});}
+  function act(a){var w=pw(); if(!w){$("igMsg").textContent="관리자 비밀번호를 먼저 입력해 주세요.";return;}
+    $("igMsg").textContent="처리 중…";
+    call({action:a,id:p.id,passcode:w}).then(function(d){
+      if(d.error==="wrong_passcode"){$("igMsg").textContent="비밀번호가 맞지 않습니다.";try{localStorage.removeItem("sseol_pw");}catch(e){}return;}
+      if(d.error){$("igMsg").textContent="오류: "+d.error;return;}
+      $("igMsg").textContent=a==="approve"?"승인했어요. 다음 12:00 또는 16:00에 순서대로 올라갑니다.":"승인을 취소했어요.";
+      refreshIg();});}
+  $("approve").onclick=function(){act("approve");}; $("unapprove").onclick=function(){act("unapprove");};
   fetch("posts/posts.json",{cache:"no-store"}).then(function(r){return r.json();}).then(function(list){
     posts=list;
     list.forEach(function(q,k){var b=document.createElement("button"); b.type="button"; b.textContent="#"+q.id+" "+q.category; b.onclick=function(){pick(k);}; $("tabs").appendChild(b);});
     var h=location.hash.slice(1), k=Math.max(0,list.findIndex(function(q){return q.id===h;}));
-    pick(k);
+    pick(k); refreshIg();
   });
 })();
 </script>
