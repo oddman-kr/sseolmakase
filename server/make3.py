@@ -36,8 +36,11 @@ def size_for(text, style):
         while fs > 40 and longest * fs * 0.98 > 912:
             fs -= 2
     else:
-        chars = len(text)
-        fs = 50 if chars <= 230 else 46 if chars <= 300 else 43 if chars <= 360 else 40
+        fs = 46
+        body = [l for l in text.split("\n") if "<h>" not in l and "</h>" not in l]
+        lw = max([len(l.replace("<b>","").replace("</b>","")) for l in body] or [0])
+        while fs > 40 and lw * fs * 0.97 > 952:
+            fs -= 1
     # guard: estimate wrapped height and shrink until it fits the 1174px text box
     import math
     plain = text.replace("<b>", "").replace("</b>", "")
