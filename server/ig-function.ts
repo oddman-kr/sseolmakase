@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
     case "delete": {
       const id = String(p.id);
       const { data: cur } = await db.from("posts").select("status").eq("id", id).maybeSingle();
-      if (cur && (cur.status === "publishing" || cur.status === "published")) return json({ error: "already_" + cur.status }, 409);
+      if (cur && cur.status === "publishing") return json({ error: "already_publishing" }, 409);
       const sp = cur ? null : await loadSitePost(id);
       const row = sp ? { ...sp, status: "deleted", approved_at: null } : { id, status: "deleted", approved_at: null };
       const { error } = cur ? await db.from("posts").update({ status: "deleted", approved_at: null }).eq("id", id)

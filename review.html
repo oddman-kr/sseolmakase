@@ -184,7 +184,11 @@ button{font:inherit;cursor:pointer}
   }
   $("approve").onclick=function(){act("approve");};
   $("unapprove").onclick=function(){act("unapprove");};
-  $("delete").onclick=function(){ if(st(posts[cur])==="deleted"){act("restore");return;} $("confirm").classList.add("on"); $("confirmYes").focus(); };
+  $("delete").onclick=function(){ var s=st(posts[cur]); if(s==="deleted"){act("restore");return;}
+    $("confirm").firstElementChild.textContent = s==="published"
+      ? "검수 목록에서 이 썰을 삭제할까요? 이미 인스타에 올라간 게시물은 지워지지 않으니 인스타 앱에서 따로 지워 주세요. (나중에 복구할 수 있어요)"
+      : "이 썰을 삭제할까요? 목차에서 숨겨지고 인스타에 올라가지 않아요. (나중에 복구할 수 있어요)";
+    $("confirm").classList.add("on"); $("confirmYes").focus(); };
   $("confirmYes").onclick=function(){$("confirm").classList.remove("on"); act("delete");};
   $("confirmNo").onclick=function(){$("confirm").classList.remove("on");};
   $("prev").onclick=function(){go(-1);}; $("next").onclick=function(){go(1);};
