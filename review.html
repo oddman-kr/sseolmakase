@@ -94,7 +94,7 @@ button{font:inherit;cursor:pointer}
 <div>이 썰을 삭제할까요? 목차에서 숨겨지고 인스타에 올라가지 않습니다. (나중에 복구 가능)</div>
 <div class="row"><button class="del" id="confirmYes" type="button">삭제하기</button><button class="no" id="confirmNo" type="button">취소</button></div>
 </div>
-<label for="pw">관리자 비밀번호 (Supabase의 ADMIN_PASSCODE, 이 기기에 저장)</label>
+<label for="pw">관리자 비밀번호 (Supabase의 SSEOL_ADMIN_PASSCODE, 이 기기에 저장)</label>
 <input id="pw" type="password" autocomplete="current-password">
 <div class="msg" id="igMsg">승인한 썰은 매일 12:00, 16:00에 승인한 순서대로 한 편씩 인스타에 올라갑니다.</div>
 </div>
@@ -113,7 +113,7 @@ button{font:inherit;cursor:pointer}
 
 <script>
 (function(){
-  var FN="https://rkcgqhmnhiwgfzglkvto.supabase.co/functions/v1/ig";
+  var FN="https://tognnsgghtmnwfwksegp.supabase.co/functions/v1/sseol-ig";
   var LABEL={draft:"미승인",approved:"게시 대기",publishing:"게시 중",published:"게시 완료",failed:"게시 실패",deleted:"삭제됨"};
   var posts=[], status={}, cur=-1, page=0;
   function $(id){return document.getElementById(id);}
@@ -178,7 +178,7 @@ button{font:inherit;cursor:pointer}
     var w=pw(); if(!w){$("igMsg").textContent="관리자 비밀번호를 먼저 입력해 주세요.";$("pw").focus();return;}
     var p=posts[cur]; $("igMsg").textContent="처리 중…";
     call({action:a,id:p.id,passcode:w}).then(function(d){
-      if(d.error==="wrong_passcode"){$("igMsg").textContent="비밀번호가 맞지 않습니다. Supabase의 ADMIN_PASSCODE 값과 같은지 확인해 주세요.";try{localStorage.removeItem("sseol_pw");}catch(e){}return;}
+      if(d.error==="wrong_passcode"){$("igMsg").textContent="비밀번호가 맞지 않습니다. Supabase의 SSEOL_ADMIN_PASSCODE 값과 같은지 확인해 주세요.";try{localStorage.removeItem("sseol_pw");}catch(e){}return;}
       if(d.error){$("igMsg").textContent="오류: "+d.error;return;}
       $("igMsg").textContent=MSG[a];
       refresh().then(function(){ if(a==="delete" && !$("showDel").checked){ var before=cur; stepEp(1); if(cur===before) stepEp(-1);} });
